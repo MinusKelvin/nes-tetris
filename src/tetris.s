@@ -32,6 +32,14 @@ ppumem .macro
   STA PPUADDR
   .endm
 
+; really only for menu navigation
+pressed .macro
+  LDA player1 + p_gamepad_old
+  AND #\1
+  EOR #\1
+  AND player1 + p_gamepad_new
+  .endm
+
 ;;;;;;;;;;;;;
 ; game code ;
 ;;;;;;;;;;;;;
@@ -75,7 +83,7 @@ RESET:
 
   ; init palettes
   ppumem BG_COLOR
-  LDA #$0D
+  LDA #$0F
   STA PPUDATA
   ; BG palette 0
   LDA #$20    ; white
@@ -147,6 +155,13 @@ state_jt:
   .dw title_state
   .dw to_menu_state
   .dw menu_state
+  .dw to_40L_1_state
+  .dw to_150L_1_state
+  .dw to_ultra_1_state
+  .dw to_battle_state
+  .dw to_40L_2_state
+  .dw to_150L_2_state
+  .dw to_ultra_2_state
   .dw to_about_state
   .dw about_state
 
@@ -229,6 +244,7 @@ read_input:
 
 ; other files
   .include "menu.s"
+  .include "game_modes.s"
 
 ;;;;;;;;;;;;;;;
 ; data tables ;

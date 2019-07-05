@@ -32,6 +32,10 @@ SP_PALETTE1 = $3F15
 SP_PALETTE2 = $3F19
 SP_PALETTE3 = $3F1D
 
+; Important constants
+
+PPU_ENABLE = %00001010
+
 ;;;;;;;;;;;;;;;;
 ; global state ;
 ;;;;;;;;;;;;;;;;
@@ -41,15 +45,24 @@ SP_PALETTE3 = $3F1D
 ; $0580-$05FF is for state-specific data
 
 game_state      = $0500
+cursor_pos      = $0501
 
 ; Global state values
 
-            .rsset 0
-S_TO_TITLE  .rs 1
-S_TITLE     .rs 1
-S_TO_MENU   .rs 1
-S_MENU      .rs 1
-S_TO_ABOUT  .rs 1
+              .rsset 0
+S_TO_TITLE    .rs 1
+S_TITLE       .rs 1
+S_TO_MENU     .rs 1
+S_MENU        .rs 1
+S_TO_40L_1    .rs 1
+S_TO_150L_1   .rs 1
+S_TO_ULTRA_1  .rs 1
+S_TO_BATTLE   .rs 1
+S_TO_40L_2    .rs 1
+S_TO_150L_2   .rs 1
+S_TO_ULTRA_2  .rs 1
+S_TO_ABOUT    .rs 1
+S_ABOUT       .rs 1
 
 ;;;;;;;;;;;;;;;;
 ; player state ;

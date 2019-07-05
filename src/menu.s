@@ -167,7 +167,7 @@ menu_state:
   BEQ .end
   LDA cursor_pos
   CLC
-  ADC #S_TO_40L_1
+  ADC #S_TO_SPRINT_1
   STA game_state
 
 .end:

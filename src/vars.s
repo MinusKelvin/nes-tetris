@@ -49,20 +49,27 @@ cursor_pos      = $0501
 
 ; Global state values
 
-              .rsset 0
-S_TO_TITLE    .rs 1
-S_TITLE       .rs 1
-S_TO_MENU     .rs 1
-S_MENU        .rs 1
-S_TO_40L_1    .rs 1
-S_TO_150L_1   .rs 1
-S_TO_ULTRA_1  .rs 1
-S_TO_BATTLE   .rs 1
-S_TO_40L_2    .rs 1
-S_TO_150L_2   .rs 1
-S_TO_ULTRA_2  .rs 1
-S_TO_ABOUT    .rs 1
-S_ABOUT       .rs 1
+                 .rsset 0
+S_TO_TITLE       .rs 1
+S_TITLE          .rs 1
+S_TO_MENU        .rs 1
+S_MENU           .rs 1
+S_TO_SPRINT_1    .rs 1
+S_TO_MARATHON_1  .rs 1
+S_TO_ULTRA_1     .rs 1
+S_TO_BATTLE      .rs 1
+S_TO_SPRINT_2    .rs 1
+S_TO_MARATHON_2  .rs 1
+S_TO_ULTRA_2     .rs 1
+S_TO_ABOUT       .rs 1
+S_ABOUT          .rs 1
+S_40L_1          .rs 1
+S_150L_1         .rs 1
+S_ULTRA_1        .rs 1
+S_BATTLE         .rs 1
+S_40L_2          .rs 1
+S_150L_2         .rs 1
+S_ULTRA_2        .rs 1
 
 ;;;;;;;;;;;;;;;;
 ; player state ;

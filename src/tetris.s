@@ -101,21 +101,21 @@ RESET:
   LDA #$12    ; blue
   STA PPUDATA
   STA PPUDATA ; skip
-  ; BG palette 2
+  ; BG palette 2 (player 1)
   LDA #$20    ; white
   STA PPUDATA
-  LDA #$10    ; light gray
+  LDA palettes+4  ; lvl 2 palette
   STA PPUDATA
-  LDA #$00    ; dark gray
+  LDA palettes+5  ; lvl 2 palette
   STA PPUDATA
   STA PPUDATA ; skip
-  ; BG palette 3
+  ; BG palette 3 (player 2)
   LDA #$20    ; white
   STA PPUDATA
-
-  ; set first tetris palette
-  LDY #0
-  JSR tetris_palette
+  LDA palettes    ; lvl 1 palette
+  STA PPUDATA
+  LDA palettes+1  ; lvl 1 palette
+  STA PPUDATA
 
   ; enable NMI (begin game next frame)
   LDA #$80
@@ -155,25 +155,22 @@ state_jt:
   .dw title_state
   .dw to_menu_state
   .dw menu_state
-  .dw to_40L_1_state
-  .dw to_150L_1_state
+  .dw to_sprint_1_state
+  .dw to_marathon_1_state
   .dw to_ultra_1_state
   .dw to_battle_state
-  .dw to_40L_2_state
-  .dw to_150L_2_state
+  .dw to_sprint_2_state
+  .dw to_marathon_2_state
   .dw to_ultra_2_state
   .dw to_about_state
   .dw about_state
-
-tetris_palette:
-  LDY #$00
-  ppumem BG_PALETTE3+1
-  LDA tris_palettes, Y
-  STA PPUDATA
-  INY
-  LDA tris_palettes, Y
-  STA PPUDATA
-  RTS
+  .dw sprint_1_state
+  .dw marathon_1_state
+  .dw ultra_1_state
+  .dw battle_state
+  .dw sprint_2_state
+  .dw marathon_2_state
+  .dw ultra_2_state
 
 ; Expect: ($00, $01) is pointer to 960 bytes (tile) + 64 bytes (attribute) data
 ; Expect: PPUADDR is set
@@ -255,5 +252,6 @@ mul_5:
   .db 50,  55,  60,  65,  70,  75,  80,  85,  90,  95
   .db 100, 105, 110, 115, 120, 125, 130, 135, 140, 145
 
-tris_palettes:
-  .db $11, $21
+palettes:
+  .db $21, $11, $22, $12
+  .db $27, $17, $28, $18

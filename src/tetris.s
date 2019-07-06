@@ -67,14 +67,15 @@ RESET:
   LDX #$00
 .clrmem:
   LDA #$00
-  STA $0000, x
-  STA $0100, x
-  STA $0200, x
-  STA $0300, x
-  STA $0400, x
-  STA $0500, x
-  STA $0600, x
-  STA $0700, x
+  STA $0000, X
+  STA $0100, X
+  STA $0300, X
+  STA $0400, X
+  STA $0500, X
+  STA $0600, X
+  STA $0700, X
+  LDA #$FF
+  STA $0200, X    ; hide all sprites
   INX
   BNE .clrmem
 .vblankwait2:
@@ -83,39 +84,16 @@ RESET:
 
   ; init palettes
   ppumem BG_COLOR
-  LDA #$0F
+  LDX #$00
+.paloop:
+  LDA palettes, X
   STA PPUDATA
-  ; BG palette 0
-  LDA #$20    ; white
-  STA PPUDATA
-  LDA #$10    ; light gray
-  STA PPUDATA
-  LDA #$00    ; dark gray
-  STA PPUDATA
-  STA PPUDATA ; skip
-  ; BG palette 1
-  LDA #$27    ; orange
-  STA PPUDATA
-  LDA #$2A    ; green
-  STA PPUDATA
-  LDA #$12    ; blue
-  STA PPUDATA
-  STA PPUDATA ; skip
-  ; BG palette 2 (player 1)
-  LDA #$20    ; white
-  STA PPUDATA
-  LDA palettes+4  ; lvl 2 palette
-  STA PPUDATA
-  LDA palettes+5  ; lvl 2 palette
-  STA PPUDATA
-  STA PPUDATA ; skip
-  ; BG palette 3 (player 2)
-  LDA #$20    ; white
-  STA PPUDATA
-  LDA palettes    ; lvl 1 palette
-  STA PPUDATA
-  LDA palettes+1  ; lvl 1 palette
-  STA PPUDATA
+  INX
+  CPX #$20
+  BNE .paloop
+
+  ; blit pause screen
+  ; TODO
 
   ; enable NMI (begin game next frame)
   LDA #$80
@@ -124,7 +102,8 @@ RESET:
   JMP .forever
 
 NMI:
-  ; begin frame: force blanking, disable NMI, clear vblank flag, prep controller state
+  ; begin frame: force blanking, disable NMI, clear vblank flag,
+  ;              prep controller state, and do OAM DMA
   LDA PPUSTATUS
   LDA #$00
   STA PPUCTRL
@@ -133,6 +112,9 @@ NMI:
   STA JOY_STROBE
   LDA #0
   STA JOY_STROBE
+  STA OAMADDR
+  LDA #$02
+  STA OAMDMA
 
   LDA game_state
   ASL A
@@ -242,6 +224,7 @@ read_input:
 ; other files
   .include "menu.s"
   .include "game_modes.s"
+  .include "draw.s"
 
 ;;;;;;;;;;;;;;;
 ; data tables ;
@@ -253,5 +236,16 @@ mul_5:
   .db 100, 105, 110, 115, 120, 125, 130, 135, 140, 145
 
 palettes:
+  .db 0, $20, $10, $00
+  .db 0, $27, $2A, $12
+  .db 0, $20, $10, $00
+  .db 0, $20, $10, $00
+  .db $0F
+  .db    $20, $10, $00
+  .db 0, $20, $10, $00
+  .db 0, $20, $10, $00
+  .db 0, $20, $10, $00
+
+tetris_palettes:
   .db $21, $11, $22, $12
   .db $27, $17, $28, $18

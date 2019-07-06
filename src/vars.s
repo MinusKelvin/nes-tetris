@@ -34,7 +34,37 @@ SP_PALETTE3 = $3F1D
 
 ; Important constants
 
-PPU_ENABLE = %00001010
+PPU_ENABLE  = %00001110
+PPU_SPRITES = %00010000
+
+;;;;;;;;;;;;;;;;;;;
+; drawing buffers ;
+;;;;;;;;;;;;;;;;;;;
+
+            .rsset $0300
+draw_10_0   .rs 12        ; p1 lc1, p1 score
+draw_10_1   .rs 12        ; p1 lc2
+draw_10_2   .rs 12        ; p1 lc3
+draw_10_3   .rs 12        ; p1 lc4
+draw_10_4   .rs 12        ; p2 lc1, p2 score
+draw_10_5   .rs 12        ; p2 lc2
+draw_10_6   .rs 12        ; p2 lc3
+draw_10_7   .rs 12        ; p2 lc4
+draw_4_0    .rs 6         ; p1 next 1, p1 combo
+draw_4_1    .rs 6         ; p1 next 2, p1 objective
+draw_4_2    .rs 6         ; p1 next 3, p1 b2b, p1 hold 1
+draw_4_3    .rs 6         ; p1 next 4, p1 hold 2
+draw_4_4    .rs 6         ; p2 next 1, p2 combo
+draw_4_5    .rs 6         ; p2 next 2, p2 objective
+draw_4_6    .rs 6         ; p2 next 3, p2 b2b, p2 hold 1
+draw_4_7    .rs 6         ; p2 next 4, p2 hold 2
+draw_5_0    .rs 7         ; p1 clearname
+draw_5_1    .rs 7         ; p2 clearname
+draw_20_0   .rs 22        ; (vertical) p1 garbage
+draw_20_1   .rs 22        ; (vertical) p2 garbage
+
+_draw_len    .rs 0
+draw_len = LOW(_draw_len)
 
 ;;;;;;;;;;;;;;;;
 ; global state ;
@@ -63,13 +93,14 @@ S_TO_MARATHON_2  .rs 1
 S_TO_ULTRA_2     .rs 1
 S_TO_ABOUT       .rs 1
 S_ABOUT          .rs 1
-S_40L_1          .rs 1
-S_150L_1         .rs 1
+S_SPRINT_1       .rs 1
+S_MARATHON_1     .rs 1
 S_ULTRA_1        .rs 1
 S_BATTLE         .rs 1
-S_40L_2          .rs 1
-S_150L_2         .rs 1
+S_SPRINT_2       .rs 1
+S_MARATHON_2     .rs 1
 S_ULTRA_2        .rs 1
+S_PAUSED         .rs 1
 
 ;;;;;;;;;;;;;;;;
 ; player state ;
@@ -80,22 +111,21 @@ S_ULTRA_2        .rs 1
 
 p_board        = $00    ; length 200 bytes. 
 p_score        = $C8    ; length 8 bytes, little endian, 1 byte per digit
-p_lines        = $D0    ; length 3 bytes, little endian, 1 byte per digit
-p_level        = $D3
-p_state        = $D4
-p_timer        = $D5
-p_combo        = $D6    ; length 2 bytes, little endian, 1 byte per digit
-p_b2b_possible = $D8
-p_piece_x      = $D9
-p_piece_y      = $DA
-p_piece_t      = $DB
-p_gamepad_new  = $DC
-p_gamepad_old  = $DD
-p_gamepad_used = $DE
-p_shift_timer  = $DF
-p_ghost_x      = $E0
-p_ghost_y      = $E1
-p_next_piece   = $F0
+p_lines        = $D0
+p_level        = $D1
+p_state        = $D2
+p_timer        = $D3
+p_combo        = $D4
+p_b2b_possible = $D5
+p_piece_x      = $D6
+p_piece_y      = $D7
+p_piece_t      = $D8
+p_gamepad_new  = $D9
+p_gamepad_old  = $DA
+p_gamepad_used = $DB
+p_shift_timer  = $DC
+p_ghost_y      = $DD
+p_next_index   = $F0
 p_next_array   = $F1    ; length 14 bytes
 
 player1 = $0600

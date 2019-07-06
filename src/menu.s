@@ -42,10 +42,10 @@ title_state:
   ppumem NAMETABLE1+$30A
   LDY #12
   LDA #$40
-.ct_loop:
+.clear_loop:
   STA PPUDATA
   DEY
-  BNE .ct_loop
+  BNE .clear_loop
   JMP .done
 
 .show:
@@ -56,12 +56,12 @@ title_state:
   ppumem NAMETABLE1+$30A
   LDX #$00
   LDY #12
-.dt_loop:
+.draw_loop:
   LDA title_text, X
   STA PPUDATA
   INX
   DEY
-  BNE .dt_loop
+  BNE .draw_loop
 
 .done:
   ; reset camera location & enable rendering
@@ -79,6 +79,7 @@ title_state:
   BEQ .end
   LDA #S_TO_MENU
   STA game_state
+
 .end:
   JMP frame_end
 
@@ -208,6 +209,17 @@ about_state:
 
 .end:
   JMP frame_end
+
+;;;;;;;;;;;;;;;;
+; pause screen ;
+;;;;;;;;;;;;;;;;
+
+pause_state:
+  ; set camera location to pause screen
+  LDA #$00
+  STA PPUSCROLL
+  LDA #$80
+  STA PPUSCROLL
 
 ;;;;;;;;
 ; data ;

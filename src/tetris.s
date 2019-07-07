@@ -115,7 +115,7 @@ NMI:
   LDA #0
   STA JOY_STROBE
   STA OAMADDR
-  LDA #$02
+  LDA #HIGH(oam_page)
   STA OAMDMA
 
   LDA <game_state

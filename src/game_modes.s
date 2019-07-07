@@ -1,3 +1,62 @@
+p1_to_zeropage:
+  LDX #$C8
+.loop:
+  LDA player1, X
+  STA <$00, X
+  INX
+  BNE .loop
+
+  LDA #LOW(player1)
+  STA <playfield_addr
+  LDA #HIGH(player1)
+  STA <playfield_addr+1
+  LDA #0
+  STA <draw_10_offset
+  STA <draw_4_offset
+  STA <draw_5_offset
+
+  RTS
+
+zeropage_to_p1:
+  LDX #$C8
+.loop:
+  LDA <$00, X
+  STA player1, X
+  INX
+  BNE .loop
+
+  RTS
+
+p2_to_zeropage:
+  LDX #$C8
+.loop:
+  LDA player2, X
+  STA <$00, X
+  INX
+  BNE .loop
+
+  LDA #LOW(player2)
+  STA <playfield_addr
+  LDA #HIGH(player2)
+  STA <playfield_addr+1
+  LDA #draw_10_5 - draw_10_0
+  STA <draw_10_offset
+  LDA #draw_4_3 - draw_4_0
+  STA <draw_4_offset
+  LDA #draw_5_1 - draw_5_0
+  STA <draw_5_offset
+
+  RTS
+
+zeropage_to_p2:
+  LDX #$C8
+.loop:
+  LDA <$00, X
+  STA player2, X
+  INX
+  BNE .loop
+
+  RTS
 
 to_sprint_1_state:
   ppumem NAMETABLE1
@@ -64,8 +123,14 @@ sprint_1_state:
   LDA #PPU_ENABLE | PPU_SPRITES
   STA PPUMASK
 
+  JSR clear_draw
   JSR read_input
-  ;JSR p1_update
+  
+  JSR p1_to_zeropage
+  LDA #$0A
+  STA <ppu_offset
+  JSR p_update
+  JSR zeropage_to_p1
 
   JMP frame_end
 
@@ -93,6 +158,8 @@ sprint_2_state:
 
   LDA #PPU_ENABLE
   STA PPUMASK
+
+  JSR clear_draw
 
   JSR read_input
 

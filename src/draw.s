@@ -153,3 +153,36 @@ draw:
   BNE .drawv20
 
   RTS
+
+clear_draw:
+  LDA #0
+  STA draw_10_0
+  STA draw_10_1
+  STA draw_10_2
+  STA draw_10_3
+  STA draw_10_4
+  STA draw_10_5
+  STA draw_10_6
+  STA draw_10_7
+  STA draw_10_8
+  STA draw_10_9
+  STA draw_4_0
+  STA draw_4_1
+  STA draw_4_2
+  STA draw_4_3
+  STA draw_4_4
+  STA draw_4_5
+  STA draw_5_0
+  STA draw_5_1
+  STA draw_20_0
+  STA draw_20_1
+  LDA #$FF
+  STA oam_page+$00
+  STA oam_page+$04
+  STA oam_page+$08
+  STA oam_page+$0C
+  STA oam_page+$10
+  STA oam_page+$14
+  STA oam_page+$18
+  STA oam_page+$1C
+  RTS

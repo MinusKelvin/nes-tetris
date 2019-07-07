@@ -50,6 +50,8 @@ JOY_RIGHT  = %00000001
 ; drawing buffers ;
 ;;;;;;;;;;;;;;;;;;;
 
+oam_page = $0200
+
             .rsset $0300
 draw_10_0   .rs 12        ; p1 lc1, p1 score
 draw_10_1   .rs 12        ; p1 lc2, p1 all clear text
@@ -158,16 +160,16 @@ p_next_array2   = $F2    ; length 7 bytes
 ; Spawn delay state - doesn't use first draw10 buffer
 ; (no extra data - encoded in state id and inits falling state)
 
-; Falling state - doesn't use first draw10 buffer
+; Falling state - doesn't use first draw10 buffer if soft dropped is true, checks special timer
 p_piece_x      = $F9
 p_piece_y      = $FA
 p_piece_t      = $FB    ; top 6 bits = piece type, bottom 2 bits = rotation state
 p_ghost_y      = $FC    ; ghost piece y
-p_tspinning    = $FD    ; 0=no, 1=mini, 2=full (T, 3 corner, rotate)
+p_fall_timer   = $FD
 p_delay_resets = $FE
-p_soft_dropped = $FF
+p_sdrop_tspin  = $FF    ; 0=no, 1=mini, 2=full, bit 7 = soft drop
 
-; Locked state - does use first draw10 buffer (goes to either redraw or garbage hook)
+; Locked state - doesn't use first draw10 buffer (goes to either clear animation or garbage hook)
 p_clear0       = $F9
 p_clear1       = $FA
 p_clear2       = $FB
@@ -176,7 +178,7 @@ p_lines_sent   = $FD
 p_clear_kind   = $FE
 p_hdrop_dist   = $FF
 
-; Clear animation state - does use first draw10 buffer (goes to redraw)
+; Clear animation state - does use first draw10 buffer (goes to redraw), doesn't use draw4 buffers
 ; p_clear0
 ; p_clear1
 ; p_clear2
@@ -203,6 +205,8 @@ PS_FALLING         .rs 1
 PS_LOCKED          .rs 1
 PS_CLEAR_ANIM      .rs 1
 PS_REDRAW_SCREEN   .rs 1
+PS_END_ANIMATION   .rs 1
+PS_GAME_OVER       .rs 1
 
 ; Clear ids
 CL_NONE              = $00
@@ -219,3 +223,10 @@ CL_TETRIS            = $10
 
 CF_BACK_TO_BACK      = $20
 CF_ALL_CLEAR         = $40
+
+; Indirection variables
+playfield_addr = $C0
+ppu_offset     = $C2
+draw_10_offset = $C3
+draw_4_offset  = $C4
+draw_5_offset  = $C5

@@ -47,7 +47,7 @@ pressed .macro
   .include "vars.s"
 
   .bank 0
-  .org $C000
+  .org $8000
 
 RESET:
   SEI            ; disable IRQs
@@ -78,6 +78,8 @@ RESET:
   STA $0200, X    ; hide all sprites
   INX
   BNE .clrmem
+  LDA #1
+  STA <rng_addr
 .vblankwait2:
   BIT PPUSTATUS
   BPL .vblankwait2
@@ -116,7 +118,7 @@ NMI:
   LDA #$02
   STA OAMDMA
 
-  LDA game_state
+  LDA <game_state
   ASL A
   TAX
   LDA state_jt, X
@@ -129,6 +131,8 @@ frame_end:
   ; end game logic: enable NMI
   LDA #$80
   STA PPUCTRL
+
+  JSR rng    ; source entropy from player behaviour by running RNG every frame
 
   RTI
 
@@ -153,6 +157,22 @@ state_jt:
   .dw sprint_2_state
   .dw marathon_2_state
   .dw ultra_2_state
+
+; https://wiki.nesdev.com/w/index.php/Random_number_generator#Linear_feedback_shift_register
+rng:
+  LDX #8
+  LDA rng_addr
+.loop:
+  ASL A
+  ROL <rng_addr+1
+  BCC .skipxor
+  EOR #$2D
+.skipxor:
+  DEX
+  BNE .loop
+  STA <rng_addr
+  CMP #0    ; Z and N now reflect the state of A
+  RTS
 
 ; Expect: ($00, $01) is pointer to 960 bytes (tile) + 64 bytes (attribute) data
 ; Expect: PPUADDR is set
@@ -221,31 +241,66 @@ read_input:
   BNE .loop2
   RTS
 
+; https://wiki.nesdev.com/w/index.php/16-bit_BCD
+bcd_convert_24:
+  ; vars
+.bcdNum = $00
+.curDigit = $04
+.bcdResult = $08
+.b0 = $05
+.b1 = $06
+.BCD_BITS = 29
+  LDA #$80 >> ((.BCD_BITS - 1) & 3)
+  STA <.curDigit
+  LDX #(.BCD_BITS - 1) >> 2
+  LDY #.BCD_BITS - 5
+
+.loop:
+  ; Trial subtract this bit to A:b
+  SEC
+  LDA <.bcdNum
+  SBC bcd_table_low, Y
+  STA <.b0
+  LDA <.bcdNum+1
+  SBC bcd_table_mid, Y
+  STA <.b1
+  LDA <.bcdNum+2
+  SBC bcd_table_high, Y
+
+  ; If A:b > bcdNum then bcdNum = A:b
+  BCC .trial_lower
+  STA <.bcdNum+2
+  LDA <.b1
+  STA <.bcdNum+1
+  LDA <.b0
+  STA <.bcdNum
+.trial_lower:
+
+  ; Copy bit from carry into digit and pick up 
+  ; end-of-digit sentinel into carry
+  ROL <.curDigit
+  DEY
+  BCC .loop
+
+  ; Copy digit into result
+  LDA <.curDigit
+  STA <.bcdResult, X
+  LDA #$10  ; Empty digit; sentinel at 4 bits
+  STA <.curDigit
+  ; If there are digits left, do those
+  DEX
+  BNE .loop
+  LDA <.bcdNum
+  STA <.bcdResult
+  
+  RTS
+
+
 ; other files
   .include "menu.s"
   .include "game_modes.s"
   .include "draw.s"
+  .include "gameplay.s"
 
-;;;;;;;;;;;;;;;
-; data tables ;
-;;;;;;;;;;;;;;;
-
-mul_5:
-  .db 0,   5,   10,  15,  20,  25,  30,  35,  40,  45
-  .db 50,  55,  60,  65,  70,  75,  80,  85,  90,  95
-  .db 100, 105, 110, 115, 120, 125, 130, 135, 140, 145
-
-palettes:
-  .db 0, $20, $10, $00
-  .db 0, $27, $2A, $12
-  .db 0, $20, $10, $00
-  .db 0, $20, $10, $00
-  .db $0F
-  .db    $20, $10, $00
-  .db 0, $20, $10, $00
-  .db 0, $20, $10, $00
-  .db 0, $20, $10, $00
-
-tetris_palettes:
-  .db $21, $11, $22, $12
-  .db $27, $17, $28, $18
+; data tables
+  .include "data.s"

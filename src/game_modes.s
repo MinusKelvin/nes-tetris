@@ -1,3 +1,4 @@
+
 to_sprint_1_state:
   ppumem NAMETABLE1
   LDA #LOW(player1_screen)
@@ -6,24 +7,26 @@ to_sprint_1_state:
   STA <$01
   JSR blit
 
-  LDA #S_ABOUT
-  STA game_state
+  JSR game_init
+
+  LDA #S_SPRINT_1
+  STA <game_state
 
   JMP frame_end
 
 to_marathon_1_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 to_ultra_1_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 to_battle_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 to_sprint_2_state:
@@ -34,39 +37,51 @@ to_sprint_2_state:
   STA <$01
   JSR blit
 
+  JSR game_init
+
   LDA #S_SPRINT_2
-  STA game_state
+  STA <game_state
 
   JMP frame_end
 
 to_marathon_2_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 to_ultra_2_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 sprint_1_state:
-  LDA #S_TO_ABOUT
-  STA game_state
+  JSR draw
+  ; reset camera location & enable rendering
+  LDA #$00
+  STA PPUSCROLL
+  STA PPUSCROLL
+
+  LDA #PPU_ENABLE | PPU_SPRITES
+  STA PPUMASK
+
+  JSR read_input
+  ;JSR p1_update
+
   JMP frame_end
 
 marathon_1_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 ultra_1_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 battle_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 sprint_2_state:
@@ -84,7 +99,7 @@ sprint_2_state:
   pressed JOY_B
   BEQ .no_b
   LDA #S_TO_MENU
-  STA game_state
+  STA <game_state
 
 .no_b:
   LDX #00
@@ -112,25 +127,15 @@ sprint_2_state:
 
 marathon_2_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 ultra_2_state:
   LDA #S_TO_ABOUT
-  STA game_state
+  STA <game_state
   JMP frame_end
 
-;;;;;;;;
-; data ;
-;;;;;;;;
-
-player1_screen:
-  .incbin "1player.bin"
-
-player2_screen:
-  .incbin "2player.bin"
-
-testdraw:
+testdraw2:
   .db $23, $02, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $22, $E2, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $22, $C2, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
@@ -139,6 +144,8 @@ testdraw:
   .db $22, $F1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $22, $D1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $22, $B1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
+  .db $22, $B1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
+  .db $22, $B1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
 
   .db $20, $CC, $80, $81, $82, $83
   .db $20, $EC, $84, $85, $86, $87
@@ -146,8 +153,6 @@ testdraw:
   .db $21, $2C, $8C, $8D, $8E, $8F
   .db $20, $DB, $90, $91, $92, $93
   .db $20, $FB, $94, $95, $96, $97
-  .db $21, $1B, $98, $99, $9A, $9B
-  .db $21, $3B, $9C, $9D, $9E, $9F
 
   .db $23, $2B, $75, $49, $4A, $4B, $4C
   .db $23, $3A, $4D, $4E, $4A, $4B, $4C
@@ -159,13 +164,15 @@ testdraw:
   .db $71, $71, $71, $71, $71, $71, $71, $71, $71, $71
   .db $71, $71, $71, $7A, $7A, $7A, $7A, $7A, $7A, $7A
 
-testdraw2:
+testdraw:
   .db $00, $02, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $E2, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $C2, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $A2, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $11, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $F1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
+  .db $00, $D1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
+  .db $00, $B1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $D1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
   .db $00, $B1, $41, $41, $41, $41, $41, $41, $41, $41, $41, $41
 
@@ -175,8 +182,6 @@ testdraw2:
   .db $21, $2C, $8C, $8D, $8E, $8F
   .db $20, $DB, $90, $91, $92, $93
   .db $20, $FB, $94, $95, $96, $97
-  .db $21, $1B, $98, $99, $9A, $9B
-  .db $21, $3B, $9C, $9D, $9E, $9F
 
   .db $23, $2B, $75, $49, $4A, $4B, $4C
   .db $23, $3A, $4D, $4E, $4A, $4B, $4C

@@ -16,7 +16,7 @@ to_title_state:
   JSR blit
 
   LDA #$01
-  STA game_state
+  STA <game_state
 
   LDA #$00
   STA title_text_shown
@@ -78,7 +78,7 @@ title_state:
   pressed JOY_START | JOY_A
   BEQ .end
   LDA #S_TO_MENU
-  STA game_state
+  STA <game_state
 
 .end:
   JMP frame_end
@@ -96,7 +96,7 @@ to_menu_state:
   JSR blit
 
   LDA #S_MENU
-  STA game_state
+  STA <game_state
   
   JMP frame_end
 
@@ -111,7 +111,7 @@ menu_state:
   STA PPUADDR
 
   LDA #$40
-  LDX cursor_pos
+  LDX <cursor_pos
 .dcloop1:
   BEQ .drawcursor
   STA PPUDATA
@@ -142,34 +142,34 @@ menu_state:
   pressed JOY_B
   BEQ .noback
   LDA #S_TO_TITLE
-  STA game_state
+  STA <game_state
   JMP frame_end
 
 .noback:
   pressed JOY_UP
   BEQ .noup
-  LDA cursor_pos
+  LDA <cursor_pos
   SEC
   SBC #1
   AND #$07
-  STA cursor_pos
+  STA <cursor_pos
 
 .noup:
   pressed JOY_DOWN
   BEQ .nodown
-  LDA cursor_pos
+  LDA <cursor_pos
   CLC
   ADC #1
   AND #$07
-  STA cursor_pos
+  STA <cursor_pos
 
 .nodown:
   pressed JOY_A | JOY_START
   BEQ .end
-  LDA cursor_pos
+  LDA <cursor_pos
   CLC
   ADC #S_TO_SPRINT_1
-  STA game_state
+  STA <game_state
 
 .end:
   JMP frame_end
@@ -187,7 +187,7 @@ to_about_state:
   JSR blit
 
   LDA #S_ABOUT
-  STA game_state
+  STA <game_state
 
   JMP frame_end
 
@@ -205,7 +205,7 @@ about_state:
   pressed JOY_B
   BEQ .end
   LDA #S_TO_MENU
-  STA game_state
+  STA <game_state
 
 .end:
   JMP frame_end
@@ -220,19 +220,3 @@ pause_state:
   STA PPUSCROLL
   LDA #$80
   STA PPUSCROLL
-
-;;;;;;;;
-; data ;
-;;;;;;;;
-
-title_text:
-  .db $19, $1B, $0E, $1C, $1C, $40, $40, $1C, $1D, $0A, $1B, $1D
-
-title_screen:
-  .incbin "title.bin"
-
-main_menu_screen:
-  .incbin "main_menu.bin"
-
-about_screen:
-  .incbin "about.bin"

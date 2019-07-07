@@ -5,7 +5,7 @@ tetris.nes: $(SOURCES) tetris.chr
 	mv src/tetris.nes .
 	mv src/tetris.fns .
 
-tetris.chr: src/tetris.bmp
+tetris.chr: src/res/tetris.bmp
 	bmp2chr $< $@
 
 clean:

@@ -34,7 +34,7 @@ draw:
   TXA
   ADC #12
   TAX
-  CMP #12*8
+  CMP #12*10
   BNE .draw10
 
   CLC
@@ -59,7 +59,7 @@ draw:
   TXA
   ADC #6
   TAX
-  CMP #6*8
+  CMP #6*6
   BNE .draw4
 
   LDA draw_5_0

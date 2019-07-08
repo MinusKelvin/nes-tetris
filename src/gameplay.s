@@ -1,4 +1,8 @@
 LOCK_DELAY = 30*4
+MAX_DELAY_RESETS = 15
+
+DAS_DELAY  = 8
+DAS_PERIOD = 3
 
 game_init:
   ; clear player variables
@@ -125,9 +129,6 @@ shuffle:
 
   RTS
 
-DAS_DELAY  = 10
-DAS_PERIOD = 4
-
 tick_input:
   ; found to turn on when pressed, off when released, and maintain state when held
   LDA <p_gamepad_old
@@ -167,6 +168,8 @@ tick_input:
   AND #JOY_LEFT | JOY_RIGHT
   ORA <p_gamepad_used
   STA <p_gamepad_used
+  LDA #DAS_PERIOD
+  STA <p_shift_timer
   JMP .das_end
 
 .start_das:
@@ -270,6 +273,13 @@ spawn_delay_0:
   BNE .noinc
   INC <p_piece_x    ; O piece spawns 1 cell farther right
 .noinc:
+
+  JSR decode_piece
+  JSR below_obstructed
+  BEQ .no_lock_delay
+  LDA #LOCK_DELAY
+  STA <p_fall_timer
+.no_lock_delay:
 
   CLC
   LDY <draw_4_offset
@@ -517,7 +527,14 @@ spawn_delay_3:
   RTS
   
 falling:
-  ; Step 1: hold
+  LDA <p_sdrop_tspin
+  AND #$7F
+  STA <p_sdrop_tspin
+
+  ;;;;;;;;;;;;;;;;
+  ; Step 1: hold ;
+  ;;;;;;;;;;;;;;;;
+
   LDA <p_gamepad_used
   AND #JOY_SELECT
   BEQ .jno_hold
@@ -616,26 +633,101 @@ falling:
 
 .no_hold:
 
-  ; Step 2: rotate
-  ; TODO
+  ;;;;;;;;;;;;;;;;;;
+  ; Step 2: rotate ; TODO
+  ;;;;;;;;;;;;;;;;;;
 
   JSR decode_piece
 
-  ; Step 2a: check for top out
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;; ;
+  ; Step 3: check for top out ;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
   JSR decoded_obstructed
   BEQ .no_top_out
-
-  ; TODO go to proper state
-  LDA #S_TO_TITLE
-  STA <game_state
-  RTS
+  JMP topped_out
 
 .no_top_out:
 
-  ; Step 2: move
-  ; TODO
+  ;;;;;;;;;;;;;;;;
+  ; Step 4: move ;
+  ;;;;;;;;;;;;;;;;
 
-  ; Step 3: gravity
+  LDA <p_gamepad_used
+  AND #JOY_LEFT
+  BEQ .end_move_left
+
+  DEC <p_piece_x
+  JSR full_obstructed
+  BEQ .move_left
+  INC <p_piece_x
+  JMP .end_move_left
+
+.move_left:
+  LDA <p_gamepad_used
+  AND #~JOY_LEFT
+  STA <p_gamepad_used
+
+  JSR below_obstructed
+  BEQ .left_floating
+
+  ; if not floating then reset lock delay if reset limit has not been reached
+  LDA <p_delay_resets
+  CMP #MAX_DELAY_RESETS
+  BPL .end_move_left
+  INC <p_delay_resets
+  LDA #LOCK_DELAY
+  STA <p_fall_timer
+
+.left_floating:
+  ; if floating then fall delay should not be longer than gravity
+  LDA <p_gravity
+  CMP <p_fall_timer
+  BPL .end_move_left
+  STA <p_fall_timer
+
+.end_move_left:
+
+  LDA <p_gamepad_used
+  AND #JOY_RIGHT
+  BEQ .end_move_right
+
+  INC <p_piece_x
+  JSR full_obstructed
+  BEQ .move_right
+  DEC <p_piece_x
+  JMP .end_move_right
+
+.move_right:
+  LDA <p_gamepad_used
+  AND #~JOY_RIGHT
+  STA <p_gamepad_used
+
+  JSR below_obstructed
+  BEQ .right_floating
+
+  ; if not floating then reset lock delay if reset limit has not been reached
+  LDA <p_delay_resets
+  CMP #MAX_DELAY_RESETS
+  BPL .end_move_right
+  INC <p_delay_resets
+  LDA #LOCK_DELAY
+  STA <p_fall_timer
+
+.right_floating:
+  ; if floating then fall delay should not be longer than gravity
+  LDA <p_gravity
+  CMP <p_fall_timer
+  BPL .end_move_right
+  STA <p_fall_timer
+
+.end_move_right:
+  JSR decode_piece
+
+  ;;;;;;;;;;;;;;;;;;;
+  ; Step 5: gravity ;
+  ;;;;;;;;;;;;;;;;;;;
+
   DEC <p_fall_timer
   BNE .no_fall_0
   JSR fall
@@ -656,7 +748,10 @@ falling:
   JSR fall
 .no_fall_3:
 
-  ; Step 4: ghost piece
+  ;;;;;;;;;;;;;;;;;;;;;;;
+  ; Step 6: ghost piece ;
+  ;;;;;;;;;;;;;;;;;;;;;;;
+
   LDA <p_piece_y
   STA <p_ghost_y
   SEC
@@ -682,10 +777,21 @@ falling:
 
 .ghost_end:
 
-  ; Step 5: harddrop and 20G
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ; Step 7: harddrop and 20G ;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
   LDA <p_gamepad_used
   AND #JOY_UP
   BEQ .no_hdrop
+
+  LDA <p_piece_y
+  SEC
+  SBC <p_ghost_y
+  STA <$0F
+
+  LDA <p_ghost_y
+  STA <p_piece_y
 
   JMP lock_piece
 .no_hdrop:
@@ -702,6 +808,10 @@ falling:
   LDA #LOCK_DELAY
   STA <p_fall_timer
 .no_20G:
+
+  ;;;;;;;;;;;;;;;;;;;
+  ; Step 8: drawing ;
+  ;;;;;;;;;;;;;;;;;;;
 
   ; Sprite pattern
   LDX <oam_offset
@@ -975,21 +1085,202 @@ fall:
   RTS
 
 .lock:
-  ; pop return to falling state function (there's nothing to do there)
+  ; pop return to falling state subroutine (there's nothing to do there)
   PLA
   PLA
+  LDA #0
+  STA <$0F
   JMP lock_piece
 
-; Expect: returns from update function
+; Expect: returns from update subroutine
+; Expect: $0F contains hard drop distance
 lock_piece:
   ; allow hold again
   LDA <p_hold
   AND #$7F
   STA <p_hold
 
-  ; TODO actually lock the piece
-  LDA #PS_SPAWN_DELAY
+  ; piece id
+  LDA <p_piece_t
+  LSR A
+  LSR A
+  CLC
+  ADC #1
+  STA <$00
+  ASL A
+  ASL A
+  ASL A
+  ASL A
+  STA <$01
+
+  LDX #0
+.loop:
+  LDY <$10, X
+  LDA <$14, X
+  BPL .lower_0
+  
+  LDA [playfield_addr], Y
+  AND #$0F
+  ORA <$01
+  STA [playfield_addr], Y
+  JMP .end_0
+
+.lower_0:
+  LDA [playfield_addr], Y
+  AND #$F0
+  ORA <$00
+  STA [playfield_addr], Y
+
+.end_0:
+  INX
+  CPX #4
+  BNE .loop
+
+  ; draw lines
+  LDA <p_piece_y
+  STA <$08
+  LDA #$40
+  STA <$01
+  LDA <draw_10_offset
+  STA <$09
+
+.draw_loop:
+  LDA <$08
+  CMP #20
+  BEQ .row21
+  BPL .done
+  JMP .cont
+.row21:
+  LDA #$50
+  STA <$01
+.cont:
+  LDX <$08
+  LDY mul_5, X
+  LDA line_ppu_high, X
+  LDX <$09
+  STA draw_10_0, X
+  LDX <$08
+  LDA line_ppu_low, X
+  CLC
+  ADC <ppu_offset
+  LDX <$09
+  STA draw_10_0+1, X
+  JSR decode_line_draw
+  LDA <$09
+  CLC
+  ADC #12
+  STA <$09
+  LDA <$08
+  ADC #1
+  STA <$08
+  SEC
+  SBC #4
+  CMP <p_piece_y
+  BNE .draw_loop
+.done:
+
+  ; a piece locking above the playfield is game over
+  LDA <p_piece_y
+  CMP #20
+  BMI .no_lock_out
+  JMP topped_out
+.no_lock_out:
+
+  ; TODO: check for line clears
+
+  LDA #PS_GARBAGE_HOOK
   STA <p_state
+  RTS
+
+; Expect: Y is start of line to draw, X is draw10 to use, $01 is image offset
+decode_line_draw:
+  LDA [playfield_addr], Y
+  STA <$00
+  AND #$0F
+  CLC
+  ADC <$01
+  STA draw_10_0+2, X
+  LDA <$00
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+  CLC
+  ADC <$01
+  STA draw_10_0+3, X
+  INY
+
+  LDA [playfield_addr], Y
+  STA <$00
+  AND #$0F
+  CLC
+  ADC <$01
+  STA draw_10_0+4, X
+  LDA <$00
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+  CLC
+  ADC <$01
+  STA draw_10_0+5, X
+  INY
+
+  LDA [playfield_addr], Y
+  STA <$00
+  AND #$0F
+  CLC
+  ADC <$01
+  STA draw_10_0+6, X
+  LDA <$00
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+  CLC
+  ADC <$01
+  STA draw_10_0+7, X
+  INY
+
+  LDA [playfield_addr], Y
+  STA <$00
+  AND #$0F
+  CLC
+  ADC <$01
+  STA draw_10_0+8, X
+  LDA <$00
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+  CLC
+  ADC <$01
+  STA draw_10_0+9, X
+  INY
+
+  LDA [playfield_addr], Y
+  STA <$00
+  AND #$0F
+  CLC
+  ADC <$01
+  STA draw_10_0+10, X
+  LDA <$00
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+  CLC
+  ADC <$01
+  STA draw_10_0+11, X
+  INY
+
+  RTS
+
+; Expect: returns from update subroutine
+topped_out:
+  ; TODO go to proper state
+  LDA #S_TO_TITLE
+  STA <game_state
   RTS
 
 locked:

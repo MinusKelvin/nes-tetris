@@ -295,12 +295,12 @@ bcd_convert_24:
   
   RTS
 
-
 ; other files
   .include "menu.s"
   .include "game_modes.s"
   .include "draw.s"
   .include "gameplay.s"
+  .include "idle_states.s"
 
 ; data tables
   .include "data.s"

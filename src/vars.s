@@ -150,7 +150,7 @@ p_gamepad_used  = $E5
 p_shift_timer   = $E6
 p_garbage       = $E7
 p_special_timer = $E8
-p_hold          = $E9
+p_hold          = $E9    ; bit 7: can't hold, 0 = no hold, otherwise piece & rotation + 1
 p_next_index    = $EA
 p_next_array1   = $EB    ; length 7 bytes
 p_next_array2   = $F2    ; length 7 bytes
@@ -230,3 +230,5 @@ ppu_offset     = $C2
 draw_10_offset = $C3
 draw_4_offset  = $C4
 draw_5_offset  = $C5
+oam_offset     = $C6
+sprite_palette = $C7

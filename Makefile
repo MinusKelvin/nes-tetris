@@ -1,7 +1,7 @@
 SOURCES := $(shell find src -type f)
 
 tetris.nes: $(SOURCES) tetris.chr
-	cd src && nesasm tetris.s
+	cd src && nesasm tetris.s -s
 	mv src/tetris.nes .
 	mv src/tetris.fns .
 

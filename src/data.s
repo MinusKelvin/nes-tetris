@@ -76,6 +76,24 @@ piece_shape_y:
   .db 0, 0, 1, 1
   .db 1, 1, 1, 2
 
+piece_width:
+  .db 4, 1, 4, 1        ; I
+  .db 3, 2, 3, 2        ; T
+  .db 2, 2, 2, 2        ; O
+  .db 3, 2, 3, 2        ; J
+  .db 3, 2, 3, 2        ; L
+  .db 3, 2, 3, 2        ; S
+  .db 3, 2, 3, 2        ; Z
+
+piece_height:
+  .db 1, 4, 1, 4        ; I
+  .db 2, 3, 2, 3        ; T
+  .db 2, 2, 2, 2        ; O
+  .db 2, 3, 2, 3        ; J
+  .db 2, 3, 2, 3        ; L
+  .db 2, 3, 2, 3        ; S
+  .db 2, 3, 2, 3        ; Z
+
 piece_offset_x:
   ; I
   .db 1, 0, 3, 0, 3
@@ -304,9 +322,13 @@ palettes:
   .db 0, $20, $10, $00
   .db 0, $20, $10, $00
 
-tetris_palettes:
-  .db $21, $11, $22, $12
-  .db $27, $17, $28, $18
+tetris_bg_palettes:
+  .db 0, $20, $21, $11
+  .db 0, $20, $27, $17
+
+tetris_fg_palettes:
+  .db 0, $20, $22, $12
+  .db 0, $20, $28, $18
 
 title_text:
   .db $19, $1B, $0E, $1C, $1C, $40, $40, $1C, $1D, $0A, $1B, $1D
@@ -314,6 +336,9 @@ title_text:
 ;;;;;;;;;;;
 ; screens ;
 ;;;;;;;;;;;
+
+  .bank 1
+  .org $A000
 
 title_screen:
   .incbin "res/title.bin"

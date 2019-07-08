@@ -1,4 +1,4 @@
-  .inesprg 1
+  .inesprg 2
   .ineschr 1
   .inesmap 0
   .inesmir 2
@@ -7,7 +7,7 @@
 ; interrupt vectors ;
 ;;;;;;;;;;;;;;;;;;;;;
 
-  .bank 1
+  .bank 3
   .org $FFFA
   .dw NMI
   .dw RESET
@@ -17,7 +17,7 @@
 ; graphics file ;
 ;;;;;;;;;;;;;;;;;
 
-  .bank 2
+  .bank 4
   .org $0000
   .incbin "../tetris.chr"
 

@@ -1,5 +1,6 @@
 LOCK_DELAY = 30*4
 MAX_DELAY_RESETS = 15
+SOFT_DROP_DELAY = 7
 
 DAS_DELAY  = 8
 DAS_PERIOD = 3
@@ -369,6 +370,7 @@ falling:
   INC <p_delay_resets
   LDA #LOCK_DELAY
   STA <p_fall_timer
+  JMP .end_move_left
 
 .left_floating:
   ; if floating then fall delay should not be longer than gravity
@@ -404,6 +406,7 @@ falling:
   INC <p_delay_resets
   LDA #LOCK_DELAY
   STA <p_fall_timer
+  JMP .end_move_right
 
 .right_floating:
   ; if floating then fall delay should not be longer than gravity
@@ -415,9 +418,29 @@ falling:
 .end_move_right:
   JSR decode_piece
 
-  ;;;;;;;;;;;;;;;;;;;
-  ; Step 5: gravity ;
-  ;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ; Step 5: gravity & soft drop ;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+check:
+  LDA <p_gamepad_used
+  AND #JOY_DOWN
+  BEQ .no_sdrop
+
+  LDA <p_fall_timer
+  CMP #SOFT_DROP_DELAY
+  BCC .no_sdrop
+
+  JSR below_obstructed
+  BNE .no_sdrop
+
+  LDA #SOFT_DROP_DELAY
+  STA <p_fall_timer
+  LDA <p_sdrop_tspin
+  ORA #$80
+  STA <p_sdrop_tspin
+
+.no_sdrop:
 
   DEC <p_fall_timer
   BNE .no_fall_0

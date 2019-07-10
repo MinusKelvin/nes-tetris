@@ -185,4 +185,12 @@ clear_draw:
   STA oam_page+$14
   STA oam_page+$18
   STA oam_page+$1C
+  STA oam_page+$20
+  STA oam_page+$24
+  STA oam_page+$28
+  STA oam_page+$2C
+  STA oam_page+$30
+  STA oam_page+$34
+  STA oam_page+$38
+  STA oam_page+$3C
   RTS

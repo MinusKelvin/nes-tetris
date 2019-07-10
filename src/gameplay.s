@@ -319,24 +319,63 @@ falling:
   STA <p_fall_timer
 
   LDA <p_hold
-  SBC #0          ; carry is clear (from ADC above): subtracts 1
+  SEC
+  SBC #1
   STA <p_piece_t
 
   CMP #8
   BNE .noinc
   INC <p_piece_x    ; O piece spawns 1 cell farther right
 .noinc:
+
+  JSR decode_piece
+  JSR below_obstructed
+  BEQ .no_lock_delay
+  LDA #LOCK_DELAY
+  STA <p_fall_timer
+.no_lock_delay:
+
   ; set hold piece
   LDA <$00
   STA <p_hold
+  RTS
 
 .no_hold:
+  JSR decode_piece
 
   ;;;;;;;;;;;;;;;;;;
   ; Step 2: rotate ; TODO
   ;;;;;;;;;;;;;;;;;;
 
-  JSR decode_piece
+  LDA <p_gamepad_used
+  AND #JOY_A
+  BEQ .no_cw
+
+  LDA #1
+  STA <$04
+  JSR rotate
+  BEQ .no_cw
+
+  LDA <p_gamepad_used
+  AND #~JOY_A
+  STA <p_gamepad_used
+
+.no_cw:
+
+  LDA <p_gamepad_used
+  AND #JOY_B
+  BEQ .no_ccw
+
+  LDA #3
+  STA <$04
+  JSR rotate
+  BEQ .no_ccw
+
+  LDA <p_gamepad_used
+  AND #~JOY_B
+  STA <p_gamepad_used
+
+.no_ccw:
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;; ;
   ; Step 3: check for top out ;
@@ -354,82 +393,38 @@ falling:
 
   LDA <p_gamepad_used
   AND #JOY_LEFT
-  BEQ .end_move_left
+  BEQ .no_move_left
 
-  DEC <p_piece_x
-  JSR full_obstructed
-  BEQ .move_left
-  INC <p_piece_x
-  JMP .end_move_left
+  LDA #$FF
+  STA <$04
+  JSR move
+  BEQ .no_move_left
 
-.move_left:
   LDA <p_gamepad_used
   AND #~JOY_LEFT
   STA <p_gamepad_used
 
-  JSR below_obstructed
-  BEQ .left_floating
-
-  ; if not floating then reset lock delay if reset limit has not been reached
-  LDA <p_delay_resets
-  CMP #MAX_DELAY_RESETS
-  BPL .end_move_left
-  INC <p_delay_resets
-  LDA #LOCK_DELAY
-  STA <p_fall_timer
-  JMP .end_move_left
-
-.left_floating:
-  ; if floating then fall delay should not be longer than gravity
-  LDA <p_gravity
-  CMP <p_fall_timer
-  BPL .end_move_left
-  STA <p_fall_timer
-
-.end_move_left:
+.no_move_left:
 
   LDA <p_gamepad_used
   AND #JOY_RIGHT
-  BEQ .end_move_right
+  BEQ .no_move_right
 
-  INC <p_piece_x
-  JSR full_obstructed
-  BEQ .move_right
-  DEC <p_piece_x
-  JMP .end_move_right
+  LDA #$01
+  STA <$04
+  JSR move
+  BEQ .no_move_right
 
-.move_right:
   LDA <p_gamepad_used
   AND #~JOY_RIGHT
   STA <p_gamepad_used
 
-  JSR below_obstructed
-  BEQ .right_floating
-
-  ; if not floating then reset lock delay if reset limit has not been reached
-  LDA <p_delay_resets
-  CMP #MAX_DELAY_RESETS
-  BPL .end_move_right
-  INC <p_delay_resets
-  LDA #LOCK_DELAY
-  STA <p_fall_timer
-  JMP .end_move_right
-
-.right_floating:
-  ; if floating then fall delay should not be longer than gravity
-  LDA <p_gravity
-  CMP <p_fall_timer
-  BPL .end_move_right
-  STA <p_fall_timer
-
-.end_move_right:
-  JSR decode_piece
+.no_move_right:
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ; Step 5: gravity & soft drop ;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-check:
   LDA <p_gamepad_used
   AND #JOY_DOWN
   BEQ .no_sdrop
@@ -768,6 +763,150 @@ below_obstructed:
   AND <$17
   BNE _obstructed
 
+  LDA #0
+  RTS
+
+reset_lock_delay:
+  LDA <p_delay_resets
+  CMP #MAX_DELAY_RESETS
+  BPL .end
+  INC <p_delay_resets
+  LDA #LOCK_DELAY
+  STA <p_fall_timer
+.end:
+  RTS
+
+; Expect: $04 is movement amount ($FF for left, 1 for right)
+move:
+  JSR below_obstructed
+  STA <$09                    ; was floating
+
+  LDA <p_piece_x
+  STA <$08                    ; original x
+  CLC
+  ADC <$04
+  STA <p_piece_x
+
+  JSR full_obstructed
+  BEQ .success
+  
+  LDA <$08
+  STA <p_piece_x
+  JSR decode_piece
+  LDA #0
+  RTS
+
+.success:
+  JSR below_obstructed
+  BEQ .floating
+
+  ; if not floating then reset lock delay
+  JSR reset_lock_delay
+
+  LDA #1
+  RTS
+
+.floating:
+  LDA <$09
+  BEQ .end
+
+  ; not floating -> floating means gravity applies
+  LDA <p_gravity
+  STA <p_fall_timer
+
+.end:
+  LDA #1
+  RTS
+
+; Expect: $04 is rotation amount (0 for slow no-op, 1 CW, 2 flip, 3 CCW)
+rotate:
+  JSR below_obstructed
+  STA <$06            ; was floating
+  LDA <p_piece_t
+  STA <$07            ; original rotation state
+  AND #~3
+  STA <$08
+  LDA <$07
+  CLC
+  ADC <$04
+  AND #3
+  ORA <$08
+  STA <p_piece_t      ; set target rotation state
+  TAX
+  LDA mul_5, X
+  STA <$09            ; target rotation offset index
+  LDX <$07
+  LDA mul_5, X
+  STA <$08            ; inital rotation offset index
+  LDA <p_piece_x
+  STA <$0A            ; original x
+  LDA <p_piece_y
+  STA <$0B            ; original y
+  LDA #5
+  STA <$0C            ; loop counter
+
+.loop:
+  LDX <$08
+  LDA piece_offset_x, X
+  LDX <$09
+  SEC
+  SBC piece_offset_x, X
+  CLC
+  ADC <$0A
+  STA <p_piece_x
+
+  LDX <$08
+  LDA piece_offset_y, X
+  LDX <$09
+  SEC
+  SBC piece_offset_y, X
+  CLC
+  ADC <$0B
+  STA <p_piece_y
+
+  JSR full_obstructed
+  BEQ .success
+
+  INC <$08
+  INC <$09
+  DEC <$0C
+  BNE .loop
+
+  ; rotation failed
+  LDA <$07
+  STA <p_piece_t
+  LDA <$0A
+  STA <p_piece_x
+  LDA <$0B
+  STA <p_piece_y
+  JSR decode_piece
+  
+  LDA #0
+  RTS
+
+.success:
+  JSR below_obstructed
+  BEQ .floating
+
+  ; not floating = reset lock delay
+  JSR reset_lock_delay
+  JMP .tspin_check
+
+.floating:
+  LDA <$06
+  BEQ .tspin_check
+
+  ; not floating -> floating means gravity applies
+  LDA <p_gravity
+  STA <p_fall_timer
+
+.tspin_check:
+  ; TODO: check for t-spins
+
+  LDA #1
+  RTS
+
+.no_rotate:
   LDA #0
   RTS
 
@@ -1237,6 +1376,22 @@ locked:
   LDA <$00
   CMP #200
   BNE .copy_loop
+
+  LDA #0
+  LDY <$01
+.empty_loop:
+  STA [playfield_addr], Y
+  INY
+  STA [playfield_addr], Y
+  INY
+  STA [playfield_addr], Y
+  INY
+  STA [playfield_addr], Y
+  INY
+  STA [playfield_addr], Y
+  INY
+  CPY #200
+  BNE .empty_loop
 
   LDA #PS_REDRAW_SCREEN
   STA <p_state

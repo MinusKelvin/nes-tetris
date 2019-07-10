@@ -157,6 +157,9 @@ p_next_array2   = $F2    ; length 7 bytes
 
 ; State-specific data
 
+; Garbage state - adds garbage for you
+p_garbage_amt  = $F9
+
 ; Spawn delay state - doesn't use first draw10 buffer
 ; (no extra data - encoded in state id and inits falling state)
 
@@ -169,12 +172,12 @@ p_fall_timer   = $FD
 p_delay_resets = $FE
 p_sdrop_tspin  = $FF    ; 0=no, 1=mini, 2=full, bit 7 = soft drop
 
-; Locked state - doesn't use first draw10 buffer (goes to either clear animation or garbage hook)
+; Locked state - doesn't use first draw10 buffer (goes to either clear animation or garbage state)
 p_clear0       = $F9
 p_clear1       = $FA
 p_clear2       = $FB
 p_clear3       = $FC
-p_lines_sent   = $FD
+;p_lines_sent   = $FD
 p_clear_kind   = $FE
 p_hdrop_dist   = $FF
 
@@ -187,7 +190,7 @@ p_anim_timer   = $FD
 p_should_flash = $FE
 
 ; Redraw screen state - does use first draw10 buffer (goes to spawn)
-p_row          = $F9
+; (no data - encoded in state id)
 
 player1 = $0600
 player2 = $0700
@@ -199,12 +202,12 @@ PF_20G          = %00000100
 
 ; Player state values
                    .rsset 0
-PS_GARBAGE_HOOK    .rs 1
+PS_ADD_GARBAGE     .rs 1
 PS_SPAWN_DELAY     .rs 4    ; 4 iterations of updating displayed next pieces
 PS_FALLING         .rs 1
 PS_LOCKED          .rs 1
 PS_CLEAR_ANIM      .rs 1
-PS_REDRAW_SCREEN   .rs 1
+PS_REDRAW_SCREEN   .rs 6
 PS_END_ANIMATION   .rs 1
 PS_GAME_OVER       .rs 1
 
@@ -221,7 +224,7 @@ CL_TRIPLE            = $0C
 CL_TSPIN_TRIPLE      = $0E
 CL_TETRIS            = $10
 
-CF_BACK_TO_BACK      = $20
+CF_B2B               = $20
 CF_ALL_CLEAR         = $40
 
 ; Indirection variables

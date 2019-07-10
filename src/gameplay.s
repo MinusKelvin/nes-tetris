@@ -216,7 +216,14 @@ p_update:
   .dw falling
   .dw locked
   .dw clear_anim
-  .dw redraw
+  .dw redraw_0
+  .dw redraw_1
+  .dw redraw_2
+  .dw redraw_3
+  .dw redraw_4
+  .dw redraw_5
+  .dw end_anim
+  .dw game_over
 
 falling:
   LDA <p_sdrop_tspin
@@ -900,9 +907,147 @@ lock_piece:
   JMP topped_out
 .no_lock_out:
 
-  ; TODO: check for line clears
+  ; check for line clears
+  ; $08 = row
+  ; $09 = counter
+  ; $0A = all clear flag
+  ; $0B = cleared lines
+  LDA #0
+  STA <$0B
+  LDA <p_piece_y
+  STA <$08
+  BNE .no_allclear
+  LDA #CF_ALL_CLEAR
+  STA <$0A
+.no_allclear:
+  LDA #0
+  STA <$09
 
-  LDA #PS_GARBAGE_HOOK
+.check_clear_loop:
+  LDX <$08
+  LDY mul_5, X
+
+  LDA [playfield_addr], Y
+  AND #$0F
+  BEQ .no_clear
+  LDA [playfield_addr], Y
+  AND #$F0
+  BEQ .no_clear
+  INY
+
+  LDA [playfield_addr], Y
+  AND #$0F
+  BEQ .no_clear
+  LDA [playfield_addr], Y
+  AND #$F0
+  BEQ .no_clear
+  INY
+
+  LDA [playfield_addr], Y
+  AND #$0F
+  BEQ .no_clear
+  LDA [playfield_addr], Y
+  AND #$F0
+  BEQ .no_clear
+  INY
+
+  LDA [playfield_addr], Y
+  AND #$0F
+  BEQ .no_clear
+  LDA [playfield_addr], Y
+  AND #$F0
+  BEQ .no_clear
+  INY
+
+  LDA [playfield_addr], Y
+  AND #$0F
+  BEQ .no_clear
+  LDA [playfield_addr], Y
+  AND #$F0
+  BEQ .no_clear
+
+  LDX <$09
+  LDA <$08
+  STA <p_clear0, X
+  INC <$0B
+  JMP .check_loop_end
+
+.no_clear:
+  LDY mul_5, X            ; X is maintained
+  LDX <$09
+  LDA #$FF
+  STA <p_clear0, X
+  LDA #0
+  ORA [playfield_addr], Y
+  INY
+  ORA [playfield_addr], Y
+  INY
+  ORA [playfield_addr], Y
+  INY
+  ORA [playfield_addr], Y
+  INY
+  ORA [playfield_addr], Y
+  BEQ .check_loop_end
+  LDA #0
+  STA <$0A
+
+.check_loop_end:
+  INC <$08
+  INC <$09
+  LDA <$09
+  CMP #5
+  BEQ .check_loop_after
+  JMP .check_clear_loop
+
+.check_loop_after:
+  LDA <$0B
+  ASL A
+  ASL A
+  ORA <p_sdrop_tspin
+  AND #$7F
+  STA <p_clear_kind
+
+  ; Stuff to check on line clear
+  LDA <$0B
+  BNE .lines_cleared
+
+  ; end combo
+  LDA #0
+  STA <p_combo
+  JMP .end_clear_stuff
+
+.lines_cleared:
+  INC <p_combo
+
+  ; check clear kind
+  LDA <p_clear_kind
+  AND #$13               ; $10 means tetris, $03 means t-spin
+  BNE .hard_move
+
+  ; "easy" move; no b2b
+  LDA <p_flags
+  AND #~PF_B2B_POSSIBLE
+  STA <p_flags
+  JMP .end_clear_stuff
+
+.hard_move:
+  LDA <p_flags
+  AND #PF_B2B_POSSIBLE
+  BEQ .not_b2b
+  LDA <p_clear_kind
+  ORA #CF_B2B
+  STA <p_clear_kind
+.not_b2b:
+  LDA <p_flags
+  ORA #PF_B2B_POSSIBLE
+  STA <p_flags
+
+.end_clear_stuff:
+
+  LDA <$0F
+  STA <p_hdrop_dist
+
+  LDA #PS_LOCKED
   STA <p_state
   RTS
 
@@ -992,10 +1137,108 @@ decode_line_draw:
 
 ; Expect: returns from update subroutine
 topped_out:
-  ; TODO go to proper state
-  LDA #S_TO_TITLE
-  STA <game_state
+  ; TODO
+  LDA #PS_END_ANIMATION
+  STA <p_state
   RTS
 
 locked:
+  LDA <p_clear0
+  CMP #$FF
+  BNE .clear_lines
+  LDA <p_clear1
+  CMP #$FF
+  BNE .clear_lines
+  LDA <p_clear2
+  CMP #$FF
+  BNE .clear_lines
+  LDA <p_clear3
+  CMP #$FF
+  BNE .clear_lines
+
+  LDA #PS_ADD_GARBAGE
+  STA <p_state
+  LDA #0
+  STA <p_garbage_amt
+
+  RTS
+
+.clear_lines:
+
+  LDA #0
+  STA <$00        ; src index
+  STA <$01        ; dst index
+
+.copy_loop:
+  LDX <p_clear0
+  LDA mul_5, X
+  CMP <$00
+  BEQ .skip_row
+
+  LDX <p_clear1
+  LDA mul_5, X
+  CMP <$00
+  BEQ .skip_row
+  
+  LDX <p_clear2
+  LDA mul_5, X
+  CMP <$00
+  BEQ .skip_row
+  
+  LDX <p_clear3
+  LDA mul_5, X
+  CMP <$00
+  BEQ .skip_row
+
+  LDY <$00
+  LDA [playfield_addr], Y
+  LDY <$01
+  STA [playfield_addr], Y
+  INC <$01
+  INC <$00
+
+  LDY <$00
+  LDA [playfield_addr], Y
+  LDY <$01
+  STA [playfield_addr], Y
+  INC <$01
+  INC <$00
+
+  LDY <$00
+  LDA [playfield_addr], Y
+  LDY <$01
+  STA [playfield_addr], Y
+  INC <$01
+  INC <$00
+
+  LDY <$00
+  LDA [playfield_addr], Y
+  LDY <$01
+  STA [playfield_addr], Y
+  INC <$01
+  INC <$00
+
+  LDY <$00
+  LDA [playfield_addr], Y
+  LDY <$01
+  STA [playfield_addr], Y
+  INC <$01
+  INC <$00
+
+  JMP .copy_cond
+
+.skip_row:
+  LDA <$00
+  CLC
+  ADC #5
+  STA <$00
+
+.copy_cond:
+  LDA <$00
+  CMP #200
+  BNE .copy_loop
+
+  LDA #PS_REDRAW_SCREEN
+  STA <p_state
+
   RTS

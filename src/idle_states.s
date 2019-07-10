@@ -310,5 +310,344 @@ spawn_delay_3:
 clear_anim:
   RTS
 
-redraw:
+redraw_0:
+  LDX <draw_10_offset
+  CLC
+
+  LDA line_ppu_low
+  ADC <ppu_offset
+  STA draw_10_0+1, X
+  LDA line_ppu_low+1
+  ADC <ppu_offset
+  STA draw_10_1+1, X
+  LDA line_ppu_low+2
+  ADC <ppu_offset
+  STA draw_10_2+1, X
+  LDA line_ppu_low+3
+  ADC <ppu_offset
+  STA draw_10_3+1, X
+
+  LDA line_ppu_high
+  STA draw_10_0, X
+  LDA line_ppu_high+1
+  STA draw_10_1, X
+  LDA line_ppu_high+2
+  STA draw_10_2, X
+  LDA line_ppu_high+3
+  STA draw_10_3, X
+
+  LDY #0
+  LDX <draw_10_offset
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #5
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #10
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #15
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDA #PS_REDRAW_SCREEN + 1
+  STA <p_state
+  RTS
+
+redraw_1:
+  LDX <draw_10_offset
+  CLC
+
+  LDA line_ppu_low+4
+  ADC <ppu_offset
+  STA draw_10_0+1, X
+  LDA line_ppu_low+5
+  ADC <ppu_offset
+  STA draw_10_1+1, X
+  LDA line_ppu_low+6
+  ADC <ppu_offset
+  STA draw_10_2+1, X
+  LDA line_ppu_low+7
+  ADC <ppu_offset
+  STA draw_10_3+1, X
+
+  LDA line_ppu_high+4
+  STA draw_10_0, X
+  LDA line_ppu_high+5
+  STA draw_10_1, X
+  LDA line_ppu_high+6
+  STA draw_10_2, X
+  LDA line_ppu_high+7
+  STA draw_10_3, X
+
+  LDY #20
+  LDX <draw_10_offset
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #25
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #30
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #35
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDA #PS_REDRAW_SCREEN + 2
+  STA <p_state
+  RTS
+
+redraw_2:
+  LDX <draw_10_offset
+  CLC
+
+  LDA line_ppu_low+8
+  ADC <ppu_offset
+  STA draw_10_0+1, X
+  LDA line_ppu_low+9
+  ADC <ppu_offset
+  STA draw_10_1+1, X
+  LDA line_ppu_low+10
+  ADC <ppu_offset
+  STA draw_10_2+1, X
+  LDA line_ppu_low+11
+  ADC <ppu_offset
+  STA draw_10_3+1, X
+
+  LDA line_ppu_high+8
+  STA draw_10_0, X
+  LDA line_ppu_high+9
+  STA draw_10_1, X
+  LDA line_ppu_high+10
+  STA draw_10_2, X
+  LDA line_ppu_high+11
+  STA draw_10_3, X
+
+  LDY #40
+  LDX <draw_10_offset
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #45
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #50
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #55
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDA #PS_REDRAW_SCREEN + 3
+  STA <p_state
+  RTS
+
+redraw_3:
+  LDX <draw_10_offset
+  CLC
+
+  LDA line_ppu_low+12
+  ADC <ppu_offset
+  STA draw_10_0+1, X
+  LDA line_ppu_low+13
+  ADC <ppu_offset
+  STA draw_10_1+1, X
+  LDA line_ppu_low+14
+  ADC <ppu_offset
+  STA draw_10_2+1, X
+  LDA line_ppu_low+15
+  ADC <ppu_offset
+  STA draw_10_3+1, X
+
+  LDA line_ppu_high+12
+  STA draw_10_0, X
+  LDA line_ppu_high+13
+  STA draw_10_1, X
+  LDA line_ppu_high+14
+  STA draw_10_2, X
+  LDA line_ppu_high+15
+  STA draw_10_3, X
+
+  LDY #60
+  LDX <draw_10_offset
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #65
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #70
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #75
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDA #PS_REDRAW_SCREEN + 4
+  STA <p_state
+  RTS
+
+redraw_4:
+  LDX <draw_10_offset
+  CLC
+
+  LDA line_ppu_low+16
+  ADC <ppu_offset
+  STA draw_10_0+1, X
+  LDA line_ppu_low+17
+  ADC <ppu_offset
+  STA draw_10_1+1, X
+  LDA line_ppu_low+18
+  ADC <ppu_offset
+  STA draw_10_2+1, X
+  LDA line_ppu_low+19
+  ADC <ppu_offset
+  STA draw_10_3+1, X
+
+  LDA line_ppu_high+16
+  STA draw_10_0, X
+  LDA line_ppu_high+17
+  STA draw_10_1, X
+  LDA line_ppu_high+18
+  STA draw_10_2, X
+  LDA line_ppu_high+19
+  STA draw_10_3, X
+
+  LDY #80
+  LDX <draw_10_offset
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #85
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #90
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDY #95
+  TXA
+  CLC
+  ADC #12
+  TAX
+  LDA #$40
+  STA <$01
+  JSR decode_line_draw
+
+  LDA #PS_REDRAW_SCREEN + 5
+  STA <p_state
+  RTS
+
+redraw_5:
+  LDX <draw_10_offset
+  CLC
+
+  LDA line_ppu_low+20
+  ADC <ppu_offset
+  STA draw_10_0+1, X
+
+  LDA line_ppu_high+20
+  STA draw_10_0, X
+
+  LDY #100
+  LDX <draw_10_offset
+  LDA #$50
+  STA <$01
+  JSR decode_line_draw
+
+  LDA #PS_SPAWN_DELAY
+  STA <p_state
+  RTS
+
+end_anim:
+  RTS
+
+game_over:
   RTS

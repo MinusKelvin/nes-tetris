@@ -2,6 +2,19 @@
 ; game data ;
 ;;;;;;;;;;;;;
 
+; first 2 corners are pointy side
+t_corners_x:
+  .db 0, 2,   0,   2
+  .db 1, 1, $FF, $FF
+  .db 0, 2,   0,   2
+  .db 0, 0,   2,   2
+
+t_corners_y:
+  .db 1, 1, $FF, $FF
+  .db 0, 2,   0,   2
+  .db 0, 0,   2,   2
+  .db 0, 2,   0,   2
+
 piece_shape_x:
   ; I
   .db 0, 1, 2, 3

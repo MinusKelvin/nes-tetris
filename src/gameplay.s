@@ -305,7 +305,7 @@ falling:
   CLC
   ADC #1
   ORA #$80
-  STA <$00
+  STA <$04
 
   ; init new piece
   LDA #3
@@ -336,7 +336,7 @@ falling:
 .no_lock_delay:
 
   ; set hold piece
-  LDA <$00
+  LDA <$04
   STA <p_hold
   RTS
 
@@ -344,7 +344,7 @@ falling:
   JSR decode_piece
 
   ;;;;;;;;;;;;;;;;;;
-  ; Step 2: rotate ; TODO
+  ; Step 2: rotate ;
   ;;;;;;;;;;;;;;;;;;
 
   LDA <p_gamepad_used
@@ -802,6 +802,8 @@ move:
 
   ; if not floating then reset lock delay
   JSR reset_lock_delay
+  LDA #0
+  STA <p_sdrop_tspin
 
   LDA #1
   RTS
@@ -901,8 +903,74 @@ rotate:
   STA <p_fall_timer
 
 .tspin_check:
-  ; TODO: check for t-spins
+  LDA <p_piece_t
+  AND #~3
+  CMP #4           ; T piece
+  BNE .no_tspin
 
+  LDA #3
+  STA <$08
+
+  LDA <p_piece_t
+  AND #3
+  ASL A
+  ASL A
+  STA <$09
+
+.corner_loop:
+  LDX <$09
+  LDA <p_piece_x
+  CLC
+  ADC t_corners_x, X
+  STA <$00
+
+  LDA <p_piece_y
+  CLC
+  ADC t_corners_y, X
+  STA <$01
+
+  JSR is_occupied
+  LDX <$08
+  STA <$04, X
+
+  INC <$09
+  DEC <$08
+  BPL .corner_loop
+
+  LDA #0
+  CLC
+  ADC <$04
+  ADC <$05
+  ADC <$06
+  ADC <$07
+  CMP #3
+  BMI .no_tspin
+
+  LDA #0
+  CLC
+  ADC <$06
+  ADC <$07
+  CMP #2
+  BEQ .full_tspin
+
+  LDA <$0C
+  CMP #3       ; $0C = 1 for 5th kick, 2 for 4th kick, and we consider both to be TST twists.
+  BMI .full_tspin                                    ; this means you can't do a Mini TSD.
+
+  LDA #1
+  STA <p_sdrop_tspin
+  JMP .end_tspin
+
+.full_tspin:
+  LDA #2
+  STA <p_sdrop_tspin
+  JMP .end_tspin
+
+.no_tspin:
+  LDA #0
+  STA <p_sdrop_tspin
+
+.end_tspin:
   LDA #1
   RTS
 
@@ -910,11 +978,53 @@ rotate:
   LDA #0
   RTS
 
+; Expect: $00 is x, $01 is y (preserves X)
+is_occupied:
+  LDA <$00
+  BMI .occupied
+  CMP #10
+  BPL .occupied
+
+  ; calc mask
+  LSR A
+  STA <$00
+  BCS .high_nibble
+  LDA #$0F
+  STA <$03
+  JMP .past_high
+.high_nibble:
+  LDA #$F0
+  STA <$03
+.past_high:
+
+  LDA <$01
+  BMI .occupied
+  CMP #40
+  BPL .occupied
+
+  TAY
+  LDA mul_5, Y
+  CLC
+  ADC <$00
+
+  TAY
+  LDA [playfield_addr], Y
+  AND <$03
+  BNE .occupied
+  RTS              ; A = 0
+
+.occupied:
+  LDA #1
+  RTS
+
 fall:
   JSR below_obstructed
   BNE .lock
 
   DEC <p_piece_y
+  LDA <p_sdrop_tspin
+  AND #~3
+  STA <p_sdrop_tspin
 
   SEC
   LDA <$10

@@ -2,8 +2,8 @@ LOCK_DELAY = 30*4
 MAX_DELAY_RESETS = 15
 SOFT_DROP_DELAY = 7
 
-DAS_DELAY  = 8
-DAS_PERIOD = 3
+DAS_DELAY  = 12
+DAS_PERIOD = 2
 
 game_init:
   ; clear player variables
@@ -954,8 +954,8 @@ rotate:
   BEQ .full_tspin
 
   LDA <$0C
-  CMP #3       ; $0C = 1 for 5th kick, 2 for 4th kick, and we consider both to be TST twists.
-  BMI .full_tspin                                    ; this means you can't do a Mini TSD.
+  CMP #1       ; $0C = 1 for 5th kick, the TST twist, which makes it a full t-spin
+  BEQ .full_tspin
 
   LDA #1
   STA <p_sdrop_tspin

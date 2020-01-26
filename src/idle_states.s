@@ -642,7 +642,7 @@ redraw_5:
   STA <$01
   JSR decode_line_draw
 
-  LDA #PS_SPAWN_DELAY
+  LDA #PS_ADD_GARBAGE
   STA <p_state
   RTS
 

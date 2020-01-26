@@ -128,17 +128,15 @@ S_PAUSED         .rs 1
 ; State that persists through state changes
 
 p_board         = $00    ; length 200 bytes.
-p_stat_lines    = $C8
-p_stat_singles  = $CA
-p_stat_doubles  = $CC
-p_stat_triples  = $CE
-p_stat_tetrises = $D0
-p_stat_tspin_0  = $D2
-p_stat_tspin_1  = $D4
-p_stat_tspin_2  = $D6
-p_stat_tspin_3  = $D8
-p_stat_b2bs     = $DA
-p_stat_allclear = $DC
+p_hdrop_x0      = $D0
+p_hdrop_x1      = $D1
+p_hdrop_x2      = $D2
+p_hdrop_x3      = $D3
+p_hdrop_y0      = $D4
+p_hdrop_y1      = $D5
+p_hdrop_y2      = $D6
+p_hdrop_y3      = $D7
+p_hdrop_timer   = $D8
 p_gravity       = $DE    ; fall delay (= 4 / speed in Gs)
 p_state         = $DF
 p_combo         = $E0    ; binary combo count
@@ -159,6 +157,7 @@ p_next_array2   = $F2    ; length 7 bytes
 
 ; Garbage state - adds garbage for you
 p_garbage_amt  = $F9
+p_garb_cheese  = $FA
 
 ; Spawn delay state - doesn't use first draw10 buffer
 ; (no extra data - encoded in state id and inits falling state)
@@ -189,7 +188,7 @@ p_hdrop_dist   = $FF
 p_anim_timer   = $FD
 p_should_flash = $FE
 
-; Redraw screen state - does use first draw10 buffer (goes to spawn)
+; Redraw screen state - does use first draw10 buffer (goes to garbage state)
 ; (no data - encoded in state id)
 
 player1 = $0600
